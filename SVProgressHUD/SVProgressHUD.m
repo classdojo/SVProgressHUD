@@ -239,29 +239,59 @@ static const CGFloat SVProgressHUDLabelSpacing = 8.0f;
     [self sharedView].motionEffectEnabled = motionEffectEnabled;
 }
 
++ (void)setDismissible:(BOOL)isDismissible {
+    [self sharedView].isDismissible = isDismissible;
+}
+
 #pragma mark - Show Methods
 
 + (void)show {
-    [self showWithStatus:nil];
+    [self show:false];
+}
+
++ (void)show:(BOOL)isDismissible {
+    [self showWithStatus:nil isDismissible:isDismissible];
 }
 
 + (void)showWithStatus:(NSString*)status {
     [self showProgress:SVProgressHUDUndefinedProgress status:status];
+}
+    
++ (void)showWithStatus:(NSString*)status isDismissible:(BOOL)isDismissible {
+    [self showProgress:SVProgressHUDUndefinedProgress status:status isDismissible:isDismissible];
 }
 
 + (void)showProgress:(float)progress {
     [self showProgress:progress status:nil];
 }
 
++ (void)showProgress:(float)progress isDismissible:(BOOL)isDismissible {
+    [self showProgress:progress status:nil isDismissible:isDismissible];
+}
+
 + (void)showProgress:(float)progress status:(NSString*)status {
-    [[self sharedView] showProgress:progress status:status];
+    [[self sharedView] showProgress:progress status:status isDismissible:false];
+}
+
++ (void)showProgress:(float)progress status:(NSString*)status isDismissible:(BOOL)isDismissible {
+    [[self sharedView] showProgress:progress status:status isDismissible:isDismissible];
 }
 
 
 #pragma mark - Show, then automatically dismiss methods
 
 + (void)showInfoWithStatus:(NSString*)status {
-    [self showImage:[self sharedView].infoImage status:status];
+    [self showImage:[self sharedView].infoImage status:status isDismissible:false];
+    
+#if TARGET_OS_IOS
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[self sharedView].hapticGenerator notificationOccurred:UINotificationFeedbackTypeWarning];
+    });
+#endif
+}
+
++ (void)showInfoWithStatus:(NSString*)status isDismissible:(BOOL)isDismissible {
+    [self showImage:[self sharedView].infoImage status:status isDismissible:isDismissible];
     
 #if TARGET_OS_IOS
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -271,7 +301,17 @@ static const CGFloat SVProgressHUDLabelSpacing = 8.0f;
 }
 
 + (void)showSuccessWithStatus:(NSString*)status {
-    [self showImage:[self sharedView].successImage status:status];
+    [self showImage:[self sharedView].successImage status:status isDismissible:false];
+
+#if TARGET_OS_IOS
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[self sharedView].hapticGenerator notificationOccurred:UINotificationFeedbackTypeSuccess];
+    });
+#endif
+}
+
++ (void)showSuccessWithStatus:(NSString*)status isDismissible:(BOOL)isDismissible {
+    [self showImage:[self sharedView].successImage status:status isDismissible:isDismissible];
 
 #if TARGET_OS_IOS
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -281,7 +321,17 @@ static const CGFloat SVProgressHUDLabelSpacing = 8.0f;
 }
 
 + (void)showErrorWithStatus:(NSString*)status {
-    [self showImage:[self sharedView].errorImage status:status];
+    [self showImage:[self sharedView].errorImage status:status isDismissible:false];
+    
+#if TARGET_OS_IOS
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[self sharedView].hapticGenerator notificationOccurred:UINotificationFeedbackTypeError];
+    });
+#endif
+}
+
++ (void)showErrorWithStatus:(NSString*)status isDismissible:(BOOL)isDismissible {
+    [self showImage:[self sharedView].errorImage status:status isDismissible:isDismissible];
     
 #if TARGET_OS_IOS
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -292,7 +342,12 @@ static const CGFloat SVProgressHUDLabelSpacing = 8.0f;
 
 + (void)showImage:(UIImage*)image status:(NSString*)status {
     NSTimeInterval displayInterval = [self displayDurationForString:status];
-    [[self sharedView] showImage:image status:status duration:displayInterval];
+    [[self sharedView] showImage:image status:status duration:displayInterval isDismissible:false];
+}
+
++ (void)showImage:(UIImage*)image status:(NSString*)status isDismissible:(BOOL)isDismissible {
+    NSTimeInterval displayInterval = [self displayDurationForString:status];
+    [[self sharedView] showImage:image status:status duration:displayInterval isDismissible:isDismissible];
 }
 
 
@@ -382,7 +437,7 @@ static const CGFloat SVProgressHUDLabelSpacing = 8.0f;
         _ringNoTextRadius = 24.0f;
         
         _cornerRadius = 14.0f;
-		
+        
         _graceTimeInterval = 0.0f;
         _minimumDismissTimeInterval = 5.0;
         _maximumDismissTimeInterval = CGFLOAT_MAX;
@@ -698,6 +753,9 @@ static const CGFloat SVProgressHUDLabelSpacing = 8.0f;
 #pragma mark - Event handling
 
 - (void)controlViewDidReceiveTouchEvent:(id)sender forEvent:(UIEvent*)event {
+    if (self.isDismissible) {
+        [self dismissWithDelay:0.0 completion:nil];
+    }
     [[NSNotificationCenter defaultCenter] postNotificationName:SVProgressHUDDidReceiveTouchEventNotification
                                                         object:self
                                                       userInfo:[self notificationUserInfo]];
@@ -715,7 +773,7 @@ static const CGFloat SVProgressHUDLabelSpacing = 8.0f;
 
 #pragma mark - Master show/dismiss methods
 
-- (void)showProgress:(float)progress status:(NSString*)status {
+- (void)showProgress:(float)progress status:(NSString*)status isDismissible:(BOOL)isDismissible {
     __weak SVProgressHUD *weakSelf = self;
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         __strong SVProgressHUD *strongSelf = weakSelf;
@@ -723,6 +781,12 @@ static const CGFloat SVProgressHUDLabelSpacing = 8.0f;
             if(strongSelf.fadeOutTimer) {
                 strongSelf.activityCount = 0;
             }
+            
+            // Set the isDismissible property
+            strongSelf.isDismissible = isDismissible;
+            
+            // Update the controlView's userInteractionEnabled based on isDismissible
+            strongSelf.controlView.userInteractionEnabled = isDismissible || (strongSelf.defaultMaskType != SVProgressHUDMaskTypeNone);
             
             // Stop timer
             strongSelf.fadeOutTimer = nil;
@@ -793,11 +857,17 @@ static const CGFloat SVProgressHUDLabelSpacing = 8.0f;
     }];
 }
 
-- (void)showImage:(UIImage*)image status:(NSString*)status duration:(NSTimeInterval)duration {
+- (void)showImage:(UIImage*)image status:(NSString*)status duration:(NSTimeInterval)duration isDismissible:(BOOL)isDismissible {
     __weak SVProgressHUD *weakSelf = self;
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         __strong SVProgressHUD *strongSelf = weakSelf;
         if(strongSelf){
+            // Set the isDismissible property
+            strongSelf.isDismissible = isDismissible;
+            
+            // Update the controlView's userInteractionEnabled based on isDismissible
+            strongSelf.controlView.userInteractionEnabled = isDismissible || (strongSelf.defaultMaskType != SVProgressHUDMaskTypeNone);
+            
             // Stop timer
             strongSelf.fadeOutTimer = nil;
             strongSelf.graceTimer = nil;
@@ -1344,7 +1414,7 @@ static const CGFloat SVProgressHUDLabelSpacing = 8.0f;
         BOOL windowIsVisible = !window.hidden && window.alpha > 0;
         BOOL windowLevelSupported = (window.windowLevel >= UIWindowLevelNormal && window.windowLevel <= self.maxSupportedWindowLevel);
         BOOL windowKeyWindow = window.isKeyWindow;
-			
+            
         if(windowOnMainScreen && windowIsVisible && windowLevelSupported && windowKeyWindow) {
             return window;
         }
@@ -1410,15 +1480,15 @@ static const CGFloat SVProgressHUDLabelSpacing = 8.0f;
 
 #if TARGET_OS_IOS
 - (UINotificationFeedbackGenerator *)hapticGenerator {
-	// Only return if haptics are enabled
-	if(!self.hapticsEnabled) {
-		return nil;
-	}
-	
-	if(!_hapticGenerator) {
-		_hapticGenerator = [[UINotificationFeedbackGenerator alloc] init];
-	}
-	return _hapticGenerator;
+    // Only return if haptics are enabled
+    if(!self.hapticsEnabled) {
+        return nil;
+    }
+    
+    if(!_hapticGenerator) {
+        _hapticGenerator = [[UINotificationFeedbackGenerator alloc] init];
+    }
+    return _hapticGenerator;
 }
 #endif
 

@@ -184,6 +184,8 @@ typedef void (^SVProgressHUDDismissCompletion)(void);
 /// @discussion Default: YES.
 @property (assign, nonatomic) BOOL motionEffectEnabled;
 
+@property (assign, nonatomic) BOOL isDismissible;
+
 @property (class, strong, nonatomic, readonly, nonnull) NSBundle *imageBundle;
 
 /// Sets the default style for the HUD.
@@ -314,6 +316,10 @@ typedef void (^SVProgressHUDDismissCompletion)(void);
 /// @param motionEffectEnabled A boolean that determines if motion effects are enabled.
 + (void)setMotionEffectEnabled:(BOOL)motionEffectEnabled;
 
+/// Sets whether the HUD can be dismissed by tapping.
+/// @param isDismissible A boolean indicating whether the HUD can be dismissed by tapping.
++ (void)setDismissible:(BOOL)isDismissible;
+
 
 #pragma mark - Show Methods
 
@@ -355,6 +361,49 @@ typedef void (^SVProgressHUDDismissCompletion)(void);
 /// @param image The custom image to be displayed.
 /// @param status The message to accompany the custom image.
 + (void)showImage:(nonnull UIImage*)image status:(nullable NSString*)status;
+
+/// Shows the HUD without any additional status message.
+/// @param isDismissible A boolean indicating whether the HUD can be dismissed by tapping.
++ (void)show:(BOOL)isDismissible;
+
+/// Shows the HUD with a provided status message and dismissible option.
+/// @param status The message to be displayed alongside the HUD.
+/// @param isDismissible A boolean indicating whether the HUD can be dismissed by tapping.
++ (void)showWithStatus:(nullable NSString*)status isDismissible:(BOOL)isDismissible;
+
+/// Display methods to show progress on the HUD.
+
+/// Shows the HUD with a progress indicator and dismissible option.
+/// @param progress A float value between 0.0 and 1.0 indicating the progress.
+/// @param isDismissible A boolean indicating whether the HUD can be dismissed by tapping.
++ (void)showProgress:(float)progress isDismissible:(BOOL)isDismissible;
+
+/// Shows the HUD with a progress indicator, a provided status message, and dismissible option.
+/// @param progress A float value between 0.0 and 1.0 indicating the progress.
+/// @param status The message to be displayed alongside the progress indicator.
+/// @param isDismissible A boolean indicating whether the HUD can be dismissed by tapping.
++ (void)showProgress:(float)progress status:(nullable NSString*)status isDismissible:(BOOL)isDismissible;
+
+/// Shows an info status with the provided message and dismissible option.
+/// @param status The info message to be displayed.
+/// @param isDismissible A boolean indicating whether the HUD can be dismissed by tapping.
++ (void)showInfoWithStatus:(nullable NSString*)status isDismissible:(BOOL)isDismissible;
+
+/// Shows a success status with the provided message and dismissible option.
+/// @param status The success message to be displayed.
+/// @param isDismissible A boolean indicating whether the HUD can be dismissed by tapping.
++ (void)showSuccessWithStatus:(nullable NSString*)status isDismissible:(BOOL)isDismissible;
+
+/// Shows an error status with the provided message and dismissible option.
+/// @param status The error message to be displayed.
+/// @param isDismissible A boolean indicating whether the HUD can be dismissed by tapping.
++ (void)showErrorWithStatus:(nullable NSString*)status isDismissible:(BOOL)isDismissible;
+
+/// Shows a custom image with the provided status message and dismissible option.
+/// @param image The custom image to be displayed.
+/// @param status The message to accompany the custom image.
+/// @param isDismissible A boolean indicating whether the HUD can be dismissed by tapping.
++ (void)showImage:(nonnull UIImage*)image status:(nullable NSString*)status isDismissible:(BOOL)isDismissible;
 
 /// Sets the offset from the center for the HUD.
 /// @param offset The UIOffset value indicating how much the HUD should be offset from its center position.
