@@ -344,7 +344,7 @@ static const CGFloat SVProgressHUDLabelSpacing = 8.0f;
 
 + (void)showImage:(UIImage*)image status:(NSString*)status {
     NSTimeInterval displayInterval = [self displayDurationForString:status];
-    [[self sharedView] showImage:image status:status duration:displayInterval isDismissible:false];
+    [[self sharedView] showImage:image status:status duration:displayInterval isDismissible:true];
 }
 
 + (void)showImage:(UIImage*)image status:(NSString*)status isDismissible:(BOOL)isDismissible {
