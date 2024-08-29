@@ -283,7 +283,7 @@ static const CGFloat SVProgressHUDLabelSpacing = 8.0f;
 #pragma mark - Show, then automatically dismiss methods
 
 + (void)showInfoWithStatus:(NSString*)status {
-    [self showImage:[self sharedView].infoImage status:status isDismissible:false];
+    [self showImage:[self sharedView].infoImage status:status isDismissible:true];
     
 #if TARGET_OS_IOS
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -303,7 +303,7 @@ static const CGFloat SVProgressHUDLabelSpacing = 8.0f;
 }
 
 + (void)showSuccessWithStatus:(NSString*)status {
-    [self showImage:[self sharedView].successImage status:status isDismissible:false];
+    [self showImage:[self sharedView].successImage status:status isDismissible:true];
 
 #if TARGET_OS_IOS
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -323,7 +323,7 @@ static const CGFloat SVProgressHUDLabelSpacing = 8.0f;
 }
 
 + (void)showErrorWithStatus:(NSString*)status {
-    [self showImage:[self sharedView].errorImage status:status isDismissible:false];
+    [self showImage:[self sharedView].errorImage status:status isDismissible:true];
     
 #if TARGET_OS_IOS
     dispatch_async(dispatch_get_main_queue(), ^{
